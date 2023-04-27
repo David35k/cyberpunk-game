@@ -18,13 +18,18 @@ carryOn = True
 # clock to control how fast screen updates
 clock = pygame.time.Clock()
 
+# stuff
+GRAVITY = 1
+
 # player class
 class Player:
-    def __init__(self, posx, posy, velx, vely):
+    def __init__(self, posx, posy, velx, vely, jumping, jumpPressed):
         self.posx = posx
         self.posy = posy
         self.velx = velx
         self.vely = vely
+        self.jumping = jumping
+        self.jumpPressed = jumpPressed
 
     def move(self, dir):
         if dir == "left":
@@ -32,36 +37,55 @@ class Player:
         elif dir == "right":
             self.velx = 10
 
-    # def stop(self):
-    #     self.velx = 0
+    def jump(self):
+        if self.jumpPressed:
+            self.jumping = True
+
+            self.vely = -10
             
 
-p1 = Player(50, 50, 0, 0)
+p1 = Player(300, 600, 0, 0, False, False)
 
 # main Game Loop
 while carryOn:
+
+    print(p1.jumping)
+
     # -- check for user inputs
     for event in pygame.event.get(): #user did something
         if event.type == pygame.QUIT:
             carryOn = False
 
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_a:
+            if event.key == pygame.K_LEFT:
                 p1.move("left")
-            if event.key == pygame.K_d:
+            if event.key == pygame.K_RIGHT:
                 p1.move("right")
+            if event.key == pygame.K_UP and not p1.jumping:
+                p1.jumpPressed = True
+                p1.jump()
 
         if event.type == pygame.KEYUP:
-            if event.key == pygame.K_a:
-                p1.velx = 0
-            if event.key == pygame.K_d:
-                p1.velx = 0
+            if event.key == pygame.K_LEFT:
+                while p1.velx < 0:
+                    p1.velx += 5
+            if event.key == pygame.K_RIGHT:
+                while p1.velx > 0:
+                    p1.velx -= 5
+            if event.key == pygame.K_UP:
+                p1.jumpPressed = False
 
 
 
     # -- main game logic
 
     # gravity
+    if p1.posy > 600:
+        p1.jumping = False
+        p1.posy = 600
+
+    if p1.jumping:
+        p1.vely += GRAVITY
 
 
     # update position of player
