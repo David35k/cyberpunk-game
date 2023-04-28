@@ -5,6 +5,7 @@ pygame.init()
 # some colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
+GREY = (150, 150, 150)
 
 # open new window
 WIDTH, HEIGHT = 700, 700
@@ -20,12 +21,15 @@ clock = pygame.time.Clock()
 
 # stuff
 GRAVITY = 1
+GROUNDLEVEL = 600
 
 # player class
 class Player:
-    def __init__(self, posx, posy, velx, vely, jumping, jumpPressed):
+    def __init__(self, posx, posy, width, height, velx, vely, jumping, jumpPressed):
         self.posx = posx
         self.posy = posy
+        self.width = width
+        self.height = height
         self.velx = velx
         self.vely = vely
         self.jumping = jumping
@@ -41,15 +45,33 @@ class Player:
         if self.jumpPressed:
             self.jumping = True
 
-            self.vely = -10
-            
+            self.vely = -20
 
-p1 = Player(300, 600, 0, 0, False, False)
+    def draw(self):
+        # draw the player
+        pygame.draw.rect(screen, GREY, [self.posx, self.posy, self.width, self.height])
+
+            
+# platform class
+class Platform:
+    def __init__(self, posx, posy, width, height):
+        self.posx = posx
+        self.posy = posy
+        self.width = width
+        self.height = height
+
+    def draw(self):
+        pygame.draw.rect(screen, BLACK, [self.posx, self.posy, self.width, self.height])
+        
+
+p1 = Player(300, 600, 50, 50, 0, 0, False, False)
+
+thing = Platform(500, 500, 100, 20)
+
+platforms = [thing]
 
 # main Game Loop
 while carryOn:
-
-    print(p1.jumping)
 
     # -- check for user inputs
     for event in pygame.event.get(): #user did something
@@ -75,14 +97,24 @@ while carryOn:
             if event.key == pygame.K_UP:
                 p1.jumpPressed = False
 
-
-
     # -- main game logic
 
+    # check current ground level
+    for platform in platforms:
+        if(p1.posx + p1.width > platform.posx and
+           p1.posx < platform.posx + platform.width and
+           p1.posy + p1.height - GRAVITY <= platform.posy):
+            GROUNDLEVEL = platform.posy
+        elif (GROUNDLEVEL == 600 and not p1.jumping and p1.posy + p1.height < GROUNDLEVEL):
+            p1.jumping = True
+        else:
+            GROUNDLEVEL = 600
+
     # gravity
-    if p1.posy > 600:
+    if p1.posy + p1.height > GROUNDLEVEL:
         p1.jumping = False
-        p1.posy = 600
+        p1.posy = GROUNDLEVEL - p1.height
+        p1.vely = 0
 
     if p1.jumping:
         p1.vely += GRAVITY
@@ -98,7 +130,12 @@ while carryOn:
     screen.fill(WHITE)
 
     # draw stuff
-    pygame.draw.rect(screen, BLACK, [p1.posx, p1.posy, 50, 50])
+    p1.draw()
+    thing.draw()
+   
+
+    # ground
+    pygame.draw.rect(screen, BLACK, [0, 600, WIDTH, 100])
 
     # update screen
     pygame.display.flip()
