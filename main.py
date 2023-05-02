@@ -6,7 +6,7 @@ pygame.init()
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREY = (150, 150, 150)
-YELLOW = (255, 255, 0)
+YELLOW = (246, 190, 0)
 
 # open new window
 WIDTH, HEIGHT = 700, 700
@@ -26,7 +26,7 @@ GROUNDLEVEL = 600
 
 # player class
 class Player:
-    def __init__(self, posx, posy, width, height, velx, vely, jumping, jumpPressed):
+    def __init__(self, posx, posy, width, height, velx, vely, jumping, jumpPressed, jumpCount):
         self.posx = posx
         self.posy = posy
         self.width = width
@@ -35,6 +35,7 @@ class Player:
         self.vely = vely
         self.jumping = jumping
         self.jumpPressed = jumpPressed
+        self.jumpCount = jumpCount
 
     def move(self, dir):
         # move the player
@@ -45,36 +46,60 @@ class Player:
 
     def jump(self):
         # make the player jump
-        if self.jumpPressed:
+        if self.jumpPressed and self.jumpCount < 2:
+            self.jumpCount += 1
             self.jumping = True
 
             self.vely = -20
+            return
 
     def draw(self):
         # draw the player
         pygame.draw.rect(screen, GREY, [self.posx, self.posy, self.width, self.height])
 
 # create the players
-p1 = Player(200, 600, 50, 50, 0, 0, False, False)
-p2 = Player(400, 600, 50, 50, 0, 0, False, False)
+p1 = Player(200, 600, 50, 50, 0, 0, False, False, 0)
+p2 = Player(400, 600, 50, 50, 0, 0, False, False, 0)
 
 class Ball:
-    def __init__(self, posx, posy, velx, vely, size):
+    def __init__(self, posx, posy, velx, vely, size, pressing):
         self.posx = posx
         self.posy = posy
         self.velx = velx
         self.vely = vely
         self.size = size
+        self.pressing = pressing
 
-    def bump(self):
-        # bump the ball up
-        self.vely = -20
+    def bumpVert(self, playerVelx, playerVely, playerJumping):
+        # bump the ball vertically
+        if playerVely == 0 and not playerJumping:
+            self.vely = -25
+            self.velx = playerVelx * 0.3
+        elif playerVely < 0:
+            self.vely = playerVely * 1.6
+            self.velx = playerVelx * 0.3
+        else:
+            self.vely = -5
+            self.velx = playerVelx * 0.3
+
+    def bumpHor(self, playerVelx, playerVely):
+        # bump the ball horizontally
+        if playerVelx == 0:
+            self.velx = 0
+        elif not playerVelx == 0:
+            self.velx = playerVelx * 1.5
+
+        return
+
+    def boing(self) :
+        if self.pressing:
+            self.velx += 10
     
     def draw(self):
         pygame.draw.circle(screen, YELLOW, [self.posx, self.posy], self.size)
 
         
-ball = Ball(200, 200, 0, 0, 25)
+ball = Ball(200, 50, 0, 0, 25, False)
 
 # main Game Loop
 while carryOn:
@@ -91,7 +116,7 @@ while carryOn:
                 p1.move("left")
             if event.key == pygame.K_d:
                 p1.move("right")
-            if event.key == pygame.K_w and not p1.jumping:
+            if event.key == pygame.K_w:
                 p1.jumpPressed = True
                 p1.jump()
 
@@ -111,7 +136,7 @@ while carryOn:
                 p2.move("left")
             if event.key == pygame.K_RIGHT:
                 p2.move("right")
-            if event.key == pygame.K_UP and not p2.jumping:
+            if event.key == pygame.K_UP:
                 p2.jumpPressed = True
                 p2.jump()
 
@@ -125,18 +150,28 @@ while carryOn:
             if event.key == pygame.K_UP:
                 p2.jumpPressed = False
 
-    # ---- main game logic ----
+        # random ball stuff lawl
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                ball.pressing = True
+                ball.boing()
 
-    print(ball.posy)
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_SPACE:
+                ball.pressing = False
+
+    # ---- main game logic ----
 
     # gravity players
     if p1.posy + p1.height > 600:
         p1.jumping = False
+        p1.jumpCount = 0
         p1.posy = 600 - p1.height
         p1.vely = 0
 
     if p2.posy + p2.height > 600:
         p2.jumping = False
+        p2.jumpCount = 0
         p2.posy = 600 - p2.height
         p2.vely = 0
 
@@ -147,20 +182,31 @@ while carryOn:
         p2.vely += GRAVITY
 
     # gravity ball
-
-    if ball.posy + ball.size > 600:
+    if ball.posy + ball.size >= 600:
         ball.posy = 600 - ball.size
         ball.vely *= -0.9
-
+    
     ball.vely += GRAVITY
 
+    # bounce off players
+    if ball.posx + ball.size > p1.posx and ball.posx - ball.size < p1.posx + p1.width and ball.posy + ball.size + ball.vely / 2  >= p1.posy and ball.posy - ball.size < p1.posy + p1.height:
+        ball.bumpVert(p1.velx, p1.vely, p1.jumping)
+        print("negus!")
+    
+    if ball.posx + ball.size >= p1.posx and ball.posy + ball.size + ball.vely / 2  >= p1.posy and ball.posy - ball.size < p1.posy + p1.height and ball.posx < p1.posx + p1.width or ball.posx - ball.size <= p1.posx + p1.width and ball.posy + ball.size + ball.vely / 2  >= p1.posy and ball.posy - ball.size < p1.posy + p1.height and ball.posx > p1.posx:
+         ball.bumpHor(p1.velx, p1.vely)
+
+    # ball boing boing
+    if ball.posx + ball.size + ball.velx >= WIDTH or ball.posx - ball.size + ball.velx <= 0:
+        ball.velx *= -0.7
+
     # update position of player 1
-    if p1.posx + p1.velx >= 0 and p1.posx + p1.width + p1.velx <= WIDTH / 2:
+    if p1.posx + p1.velx >= 0 and p1.posx + p1.width + p1.velx <= WIDTH / 2 - 5:
         p1.posx += p1.velx
     p1.posy += p1.vely
     
     # update position of player 2
-    if p2.posx + p2.velx + p2.width <= WIDTH and p2.posx + p2.velx >= WIDTH / 2:
+    if p2.posx + p2.velx + p2.width <= WIDTH and p2.posx + p2.velx >= WIDTH / 2 + 5:
         p2.posx += p2.velx
     p2.posy += p2.vely
 
@@ -178,8 +224,9 @@ while carryOn:
     p2.draw()
     ball.draw()
 
-    # ground
+    # ground and net
     pygame.draw.rect(screen, BLACK, [0, HEIGHT - 100, WIDTH, 100])
+    pygame.draw.rect(screen, BLACK, [WIDTH / 2 - 5, HEIGHT - 200, 10, 200])
 
     # update screen
     pygame.display.flip()
