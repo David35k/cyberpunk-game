@@ -12,7 +12,7 @@ YELLOW = (246, 190, 0)
 WIDTH, HEIGHT = 700, 700
 size = (WIDTH, HEIGHT)
 screen = pygame.display.set_mode(size)
-pygame.display.set_caption("FIRST GAME IN PYTHON!!!")
+pygame.display.set_caption("VOLLEYBALL GAME!!!!!")
 
 # game will carry on until user exits
 carryOn = True
@@ -23,6 +23,7 @@ clock = pygame.time.Clock()
 # stuff
 GRAVITY = 1
 GROUNDLEVEL = 600
+NET_HEIGHT = 250
 
 # player class
 class Player:
@@ -99,7 +100,7 @@ class Ball:
         pygame.draw.circle(screen, YELLOW, [self.posx, self.posy], self.size)
 
         
-ball = Ball(200, 50, 0, 0, 25, False)
+ball = Ball(350, 50, 0, 0, 25, False)
 
 # main Game Loop
 while carryOn:
@@ -189,12 +190,29 @@ while carryOn:
     ball.vely += GRAVITY
 
     # bounce off players
+    # player 1
     if ball.posx + ball.size > p1.posx and ball.posx - ball.size < p1.posx + p1.width and ball.posy + ball.size + ball.vely / 2  >= p1.posy and ball.posy - ball.size < p1.posy + p1.height:
         ball.bumpVert(p1.velx, p1.vely, p1.jumping)
-        print("negus!")
     
     if ball.posx + ball.size >= p1.posx and ball.posy + ball.size + ball.vely / 2  >= p1.posy and ball.posy - ball.size < p1.posy + p1.height and ball.posx < p1.posx + p1.width or ball.posx - ball.size <= p1.posx + p1.width and ball.posy + ball.size + ball.vely / 2  >= p1.posy and ball.posy - ball.size < p1.posy + p1.height and ball.posx > p1.posx:
          ball.bumpHor(p1.velx, p1.vely)
+
+    # player 2
+    if ball.posx + ball.size > p2.posx and ball.posx - ball.size < p2.posx + p2.width and ball.posy + ball.size + ball.vely / 2  >= p2.posy and ball.posy - ball.size < p2.posy + p2.height:
+        ball.bumpVert(p2.velx, p2.vely, p2.jumping)
+    
+    if ball.posx + ball.size >= p2.posx and ball.posy + ball.size + ball.vely / 2  >= p2.posy and ball.posy - ball.size < p2.posy + p2.height and ball.posx < p2.posx + p2.width or ball.posx - ball.size <= p2.posx + p2.width and ball.posy + ball.size + ball.vely / 2  >= p2.posy and ball.posy - ball.size < p2.posy + p2.height and ball.posx > p2.posx:
+         ball.bumpHor(p2.velx, p2.vely)
+
+    # bounce off net
+    if ball.posx + ball.size + ball.velx >= WIDTH / 2 - 5 and ball.posx + ball.size < WIDTH / 2 + 5 + ball.velx and ball.posy + ball.size >= HEIGHT - NET_HEIGHT:
+        ball.velx *= -0.3
+    
+    if ball.posx - ball.size + ball.velx <= WIDTH / 2 + 5 and ball.posx - ball.size > WIDTH / 2 - 5 + ball.velx and ball.posy + ball.size >= HEIGHT - NET_HEIGHT:
+        ball.velx *= -0.3
+
+    if ball.posy + ball.size >= HEIGHT - NET_HEIGHT and ball.posy + ball.size < HEIGHT - NET_HEIGHT + 20 and ball.posx + ball.size >= WIDTH / 2 - 5 and ball.posx - ball.size <= WIDTH / 2 + 5:
+        ball.vely *= -0.4
 
     # ball boing boing
     if ball.posx + ball.size + ball.velx >= WIDTH or ball.posx - ball.size + ball.velx <= 0:
@@ -226,7 +244,7 @@ while carryOn:
 
     # ground and net
     pygame.draw.rect(screen, BLACK, [0, HEIGHT - 100, WIDTH, 100])
-    pygame.draw.rect(screen, BLACK, [WIDTH / 2 - 5, HEIGHT - 200, 10, 200])
+    pygame.draw.rect(screen, BLACK, [WIDTH / 2 - 5, HEIGHT - NET_HEIGHT, 10, NET_HEIGHT])
 
     # update screen
     pygame.display.flip()
