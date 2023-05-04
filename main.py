@@ -199,8 +199,10 @@ while carryOn:
 
     # gravity ball
     if ball.posy + ball.size >= 600:
+        print("touching floor!")
         ball.posy = 600 - ball.size
         ball.vely *= -0.9
+    
     
     ball.vely += GRAVITY
 
