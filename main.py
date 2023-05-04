@@ -7,9 +7,10 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREY = (150, 150, 150)
 YELLOW = (246, 190, 0)
+PURPLE = (255, 0 , 255)
 
 # open new window
-WIDTH, HEIGHT = 700, 700
+WIDTH, HEIGHT = 1000, 700
 size = (WIDTH, HEIGHT)
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("VOLLEYBALL GAME!!!!!")
@@ -27,7 +28,7 @@ NET_HEIGHT = 250
 
 # player class
 class Player:
-    def __init__(self, posx, posy, width, height, velx, vely, jumping, jumpPressed, jumpCount):
+    def __init__(self, posx, posy, width, height, velx, vely, jumping, jumpPressed, jumpCount, attackPressed):
         self.posx = posx
         self.posy = posy
         self.width = width
@@ -37,6 +38,7 @@ class Player:
         self.jumping = jumping
         self.jumpPressed = jumpPressed
         self.jumpCount = jumpCount
+        self.attackPressed = attackPressed
 
     def move(self, dir):
         # move the player
@@ -59,17 +61,18 @@ class Player:
         pygame.draw.rect(screen, GREY, [self.posx, self.posy, self.width, self.height])
 
 # create the players
-p1 = Player(200, 600, 50, 50, 0, 0, False, False, 0)
-p2 = Player(400, 600, 50, 50, 0, 0, False, False, 0)
+p1 = Player(WIDTH * 1/4, 600, 50, 50, 0, 0, False, False, 0, False)
+p2 = Player(WIDTH * 3/4, 600, 50, 50, 0, 0, False, False, 0, False)
 
 class Ball:
-    def __init__(self, posx, posy, velx, vely, size, pressing):
+    def __init__(self, posx, posy, velx, vely, size, p1Attacking, p2Attacking):
         self.posx = posx
         self.posy = posy
         self.velx = velx
         self.vely = vely
         self.size = size
-        self.pressing = pressing
+        self.p1Attacking = p1Attacking
+        self.p2Attacking = p2Attacking
 
     def bumpVert(self, playerVelx, playerVely, playerJumping):
         # bump the ball vertically
@@ -83,24 +86,30 @@ class Ball:
             self.vely = -5
             self.velx = playerVelx * 0.3
 
-    def bumpHor(self, playerVelx, playerVely):
+    def bumpHor(self, playerVelx):
         # bump the ball horizontally
         if playerVelx == 0:
             self.velx = 0
         elif not playerVelx == 0:
-            self.velx = playerVelx * 1.5
+            self.velx = playerVelx * 1.4
 
         return
+    
+    def attack(self, player):
+        if player == p1:
+            self.posx += 50
+            self.velx = 40
+        elif player == p2:
+            self.posx -= 50
+            self.velx = -40
 
-    def boing(self) :
-        if self.pressing:
-            self.velx += 10
+        self.vely = 20
     
     def draw(self):
         pygame.draw.circle(screen, YELLOW, [self.posx, self.posy], self.size)
 
         
-ball = Ball(350, 50, 0, 0, 25, False)
+ball = Ball(700, 50, 0, 0, 25, False, False)
 
 # main Game Loop
 while carryOn:
@@ -151,17 +160,23 @@ while carryOn:
             if event.key == pygame.K_UP:
                 p2.jumpPressed = False
 
-        # random ball stuff lawl
+        # attacking
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                ball.pressing = True
-                ball.boing()
+            if event.key == pygame.K_f:
+                if ball.posx + ball.velx + ball.size >= p1.posx + p1.width/1.5 and ball.posx + ball.velx - ball.size <= p1.posx + p1.width*1.5 and ball.posy + ball.vely + ball.size >= p1.posy - p1.height and ball.posy + ball.vely - ball.size <= p1.posy + p1.height*1.5:
+                    ball.p1Attacking = True
+                    ball.attack(p1)
+            if event.key == pygame.K_l:
+                if ball.posx + ball.velx + ball.size >= p2.posx - p2.width/1.5 - p2.width/2 and ball.posx + ball.velx - ball.size <= p2.posx + p2.width*1.5 and ball.posy + ball.vely + ball.size >= p2.posy - p2.height and ball.posy + ball.vely - ball.size <= p2.posy + p2.height*1.5:
+                    ball.p1Attacking = True
+                    ball.attack(p2)
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_SPACE:
-                ball.pressing = False
+                ball.p1Attacking = False
 
     # ---- main game logic ----
+
 
     # gravity players
     if p1.posy + p1.height > 600:
@@ -195,14 +210,14 @@ while carryOn:
         ball.bumpVert(p1.velx, p1.vely, p1.jumping)
     
     if ball.posx + ball.size >= p1.posx and ball.posy + ball.size + ball.vely / 2  >= p1.posy and ball.posy - ball.size < p1.posy + p1.height and ball.posx < p1.posx + p1.width or ball.posx - ball.size <= p1.posx + p1.width and ball.posy + ball.size + ball.vely / 2  >= p1.posy and ball.posy - ball.size < p1.posy + p1.height and ball.posx > p1.posx:
-         ball.bumpHor(p1.velx, p1.vely)
+         ball.bumpHor(p1.velx)
 
     # player 2
     if ball.posx + ball.size > p2.posx and ball.posx - ball.size < p2.posx + p2.width and ball.posy + ball.size + ball.vely / 2  >= p2.posy and ball.posy - ball.size < p2.posy + p2.height:
         ball.bumpVert(p2.velx, p2.vely, p2.jumping)
     
     if ball.posx + ball.size >= p2.posx and ball.posy + ball.size + ball.vely / 2  >= p2.posy and ball.posy - ball.size < p2.posy + p2.height and ball.posx < p2.posx + p2.width or ball.posx - ball.size <= p2.posx + p2.width and ball.posy + ball.size + ball.vely / 2  >= p2.posy and ball.posy - ball.size < p2.posy + p2.height and ball.posx > p2.posx:
-         ball.bumpHor(p2.velx, p2.vely)
+         ball.bumpHor(p2.velx)
 
     # bounce off net
     if ball.posx + ball.size + ball.velx >= WIDTH / 2 - 5 and ball.posx + ball.size < WIDTH / 2 + 5 + ball.velx and ball.posy + ball.size >= HEIGHT - NET_HEIGHT:
@@ -212,7 +227,7 @@ while carryOn:
         ball.velx *= -0.3
 
     if ball.posy + ball.size >= HEIGHT - NET_HEIGHT and ball.posy + ball.size < HEIGHT - NET_HEIGHT + 20 and ball.posx + ball.size >= WIDTH / 2 - 5 and ball.posx - ball.size <= WIDTH / 2 + 5:
-        ball.vely *= -0.4
+        ball.vely *= -0.8
 
     # ball boing boing
     if ball.posx + ball.size + ball.velx >= WIDTH or ball.posx - ball.size + ball.velx <= 0:
@@ -241,6 +256,10 @@ while carryOn:
     p1.draw()
     p2.draw()
     ball.draw()
+
+    # hitboxes for debuggin and stuff
+    # pygame.draw.rect(screen, PURPLE, [p1.posx + p1.width/1.5, p1.posy - p1.height - 10, p1.width*1.5, p1.height*1.5])
+    # pygame.draw.rect(screen, PURPLE, [p2.posx - p2.width/1.5 - p2.width/2, p2.posy - p2.height - 10, p2.width*1.5, p2.height*1.5])
 
     # ground and net
     pygame.draw.rect(screen, BLACK, [0, HEIGHT - 100, WIDTH, 100])
