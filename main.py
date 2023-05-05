@@ -26,9 +26,13 @@ GRAVITY = 1
 GROUNDLEVEL = 600
 NET_HEIGHT = 250
 
+
+font = pygame.font.SysFont(None, 50)
+img = font.render('hello', True, (0, 0, 0))
+
 # player class
 class Player:
-    def __init__(self, posx, posy, width, height, velx, vely, jumping, jumpPressed, jumpCount, attackPressed):
+    def __init__(self, posx, posy, width, height, velx, vely, jumping, jumpPressed, jumpCount, attackPressed, score):
         self.posx = posx
         self.posy = posy
         self.width = width
@@ -39,6 +43,7 @@ class Player:
         self.jumpPressed = jumpPressed
         self.jumpCount = jumpCount
         self.attackPressed = attackPressed
+        self.score = score
 
     def move(self, dir):
         # move the player
@@ -61,8 +66,8 @@ class Player:
         pygame.draw.rect(screen, GREY, [self.posx, self.posy, self.width, self.height])
 
 # create the players
-p1 = Player(WIDTH * 1/4, 600, 50, 50, 0, 0, False, False, 0, False)
-p2 = Player(WIDTH * 3/4, 600, 50, 50, 0, 0, False, False, 0, False)
+p1 = Player(WIDTH * 1/4, 600, 50, 50, 0, 0, False, False, 0, False, 0)
+p2 = Player(WIDTH * 3/4, 600, 50, 50, 0, 0, False, False, 0, False, 0)
 
 class Ball:
     def __init__(self, posx, posy, velx, vely, size, p1Attacking, p2Attacking):
@@ -113,6 +118,8 @@ ball = Ball(700, 50, 0, 0, 25, False, False)
 
 # main Game Loop
 while carryOn:
+
+    
 
     # ---- check for user inputs ----
 
@@ -197,9 +204,16 @@ while carryOn:
     if p2.jumping:
         p2.vely += GRAVITY
 
-    # gravity ball
+    # gravity ball and ground check
     if ball.posy + ball.size >= 600:
-        print("touching floor!")
+        # if the ball is on the left side of the court give player 2 the point, otherwise give player 1 the point
+        if ball.posx < WIDTH / 2:
+            p2.score += 1
+            print("Score: " + str(p1.score) + " : " + str(p2.score))
+        elif ball.posx > WIDTH / 2:
+            p1.score += 1
+            print("Score: " + str(p1.score) + " : " + str(p2.score))
+
         ball.posy = 600 - ball.size
         ball.vely *= -0.9
     
@@ -258,6 +272,8 @@ while carryOn:
     p1.draw()
     p2.draw()
     ball.draw()
+
+    screen.blit(img, (20, 20))
 
     # hitboxes for debuggin and stuff
     # pygame.draw.rect(screen, PURPLE, [p1.posx + p1.width/1.5, p1.posy - p1.height - 10, p1.width*1.5, p1.height*1.5])
