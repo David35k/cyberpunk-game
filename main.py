@@ -26,10 +26,6 @@ GRAVITY = 1
 GROUNDLEVEL = 600
 NET_HEIGHT = 250
 
-
-font = pygame.font.SysFont(None, 50)
-img = font.render('hello', True, (0, 0, 0))
-
 # player class
 class Player:
     def __init__(self, posx, posy, width, height, velx, vely, jumping, jumpPressed, jumpCount, attackPressed, score):
@@ -112,15 +108,15 @@ class Ball:
     
     def draw(self):
         pygame.draw.circle(screen, YELLOW, [self.posx, self.posy], self.size)
-
         
 ball = Ball(700, 50, 0, 0, 25, False, False)
 
+# text
+scoreFont = pygame.font.SysFont(None, 100)
+
+
 # main Game Loop
 while carryOn:
-
-    
-
     # ---- check for user inputs ----
 
     for event in pygame.event.get(): #user did something
@@ -273,7 +269,12 @@ while carryOn:
     p2.draw()
     ball.draw()
 
-    screen.blit(img, (20, 20))
+    # render text
+    p1ScoreRect = scoreFont.render(str(p1.score), True, (0, 0, 0))
+    p2ScoreRect = scoreFont.render(str(p2.score), True, (0, 0, 0))
+
+    screen.blit(p1ScoreRect, (WIDTH * 1/4, 20))
+    screen.blit(p2ScoreRect, (WIDTH * 3/4, 20))
 
     # hitboxes for debuggin and stuff
     # pygame.draw.rect(screen, PURPLE, [p1.posx + p1.width/1.5, p1.posy - p1.height - 10, p1.width*1.5, p1.height*1.5])
