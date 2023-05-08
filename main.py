@@ -28,7 +28,7 @@ NET_HEIGHT = 250
 
 # player class
 class Player:
-    def __init__(self, posx, posy, width, height, velx, vely, jumping, jumpPressed, jumpCount, attackPressed, score):
+    def __init__(self, posx, posy, width, height, velx, vely, jumping, jumpPressed, jumpCount, attackPressed, score, canMove):
         self.posx = posx
         self.posy = posy
         self.width = width
@@ -40,6 +40,7 @@ class Player:
         self.jumpCount = jumpCount
         self.attackPressed = attackPressed
         self.score = score
+        self.canMove = canMove
 
     def move(self, dir):
         # move the player
@@ -66,7 +67,7 @@ p1 = Player(WIDTH * 1/4, 600, 50, 50, 0, 0, False, False, 0, False, 0)
 p2 = Player(WIDTH * 3/4, 600, 50, 50, 0, 0, False, False, 0, False, 0)
 
 class Ball:
-    def __init__(self, posx, posy, velx, vely, size, p1Attacking, p2Attacking):
+    def __init__(self, posx, posy, velx, vely, size, p1Attacking, p2Attacking, serving):
         self.posx = posx
         self.posy = posy
         self.velx = velx
@@ -74,6 +75,7 @@ class Ball:
         self.size = size
         self.p1Attacking = p1Attacking
         self.p2Attacking = p2Attacking
+        self.serving = serving
 
     def bumpVert(self, playerVelx, playerVely, playerJumping):
         # bump the ball vertically
@@ -106,14 +108,24 @@ class Ball:
 
         self.vely = 20
     
+    def serve(self, player):
+        self.serving = True
+        if player == p1:
+            self.posx = 100
+            self.posy = HEIGHT - 200
+        elif player == p2:
+            self.posx = WIDTH - 100
+            self.posy = HEIGHT - 200
+
     def draw(self):
         pygame.draw.circle(screen, YELLOW, [self.posx, self.posy], self.size)
         
-ball = Ball(700, 50, 0, 0, 25, False, False)
+ball = Ball(700, 50, 0, 0, 25, False, False, False)
+
+ball.serve(p1)
 
 # text
 scoreFont = pygame.font.SysFont(None, 100)
-
 
 # main Game Loop
 while carryOn:
@@ -166,7 +178,11 @@ while carryOn:
         # attacking
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_f:
-                if ball.posx + ball.velx + ball.size >= p1.posx + p1.width/1.5 and ball.posx + ball.velx - ball.size <= p1.posx + p1.width*1.5 and ball.posy + ball.vely + ball.size >= p1.posy - p1.height and ball.posy + ball.vely - ball.size <= p1.posy + p1.height*1.5:
+                if ball.serving:
+                    ball.velx = 15
+                    ball.vely = -25
+                    ball.serving = False
+                elif ball.posx + ball.velx + ball.size >= p1.posx + p1.width/1.5 and ball.posx + ball.velx - ball.size <= p1.posx + p1.width*1.5 and ball.posy + ball.vely + ball.size >= p1.posy - p1.height and ball.posy + ball.vely - ball.size <= p1.posy + p1.height*1.5:
                     ball.p1Attacking = True
                     ball.attack(p1)
             if event.key == pygame.K_l:
@@ -213,8 +229,8 @@ while carryOn:
         ball.posy = 600 - ball.size
         ball.vely *= -0.9
     
-    
-    ball.vely += GRAVITY
+    if not ball.serving:
+        ball.vely += GRAVITY
 
     # bounce off players
     # player 1
