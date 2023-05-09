@@ -1,8 +1,6 @@
 # import the pygame library and initialise the game engine
-import pygame
+import pygame, time, random
 pygame.init()
-
-import time
 
 # some colors
 BLACK = (0, 0, 0)
@@ -22,6 +20,13 @@ carryOn = True
 
 # clock to control how fast screen updates
 clock = pygame.time.Clock()
+
+# screen shake shinenigans
+screenShakeOffset = [0, 0]
+screenShakeLength = 0
+
+# particles
+particles = []
 
 # stuff
 GRAVITY = 1
@@ -66,7 +71,7 @@ class Player:
 
     def draw(self):
         # draw the player
-        pygame.draw.rect(screen, GREY, [self.posx, self.posy, self.width, self.height])
+        pygame.draw.rect(screen, GREY, [self.posx + screenShakeOffset[0], self.posy + screenShakeOffset[1], self.width, self.height])
 
 # create the players
 p1 = Player(50, 600, 50, 50, 0, 0, False, False, 0, False, 0, False)
@@ -113,6 +118,7 @@ class Ball:
             self.velx = -40
 
         self.vely = 20
+        
     
     def serve(self, player):
         self.serving = True
@@ -134,13 +140,15 @@ class Ball:
             self.posy = HEIGHT - 200
 
     def draw(self):
-        pygame.draw.circle(screen, YELLOW, [self.posx, self.posy], self.size)
+        pygame.draw.circle(screen, YELLOW, [self.posx + screenShakeOffset[0], self.posy + screenShakeOffset[1]], self.size)
         
 ball = Ball(700, 50, 0, 0, 25, False, False, True)
 
 ball.serve(p1)
 
 def restart(playerScored):
+    screenShakeOffset[0] = 0
+    screenShakeOffset[1] = 0
     time.sleep(1.5)
 
     if playerScored == p1:
@@ -157,6 +165,17 @@ p2ScoredRect = messageFont.render("Player 2 scored!", True, BLACK)
 
 # main Game Loop
 while carryOn:
+
+    particles.append([250, 250])
+
+    if screenShakeLength > 0:
+        screenShakeLength -= 1
+        screenShakeOffset[0] = random.randint(-10, 10)
+        screenShakeOffset[1] = random.randint(-10, 10)
+    elif screenShakeLength == 0:
+        screenShakeOffset[0] = 0
+        screenShakeOffset[1] = 0
+
     # ---- check for user inputs ----
 
     for event in pygame.event.get(): #user did something
@@ -212,6 +231,7 @@ while carryOn:
                     ball.serving = False
                     p1.canMove = True
                 elif ball.posx + ball.velx + ball.size >= p1.posx + p1.width/1.5 and ball.posx + ball.velx - ball.size <= p1.posx + p1.width*1.5 and ball.posy + ball.vely + ball.size >= p1.posy - p1.height and ball.posy + ball.vely - ball.size <= p1.posy + p1.height*1.5:
+                    screenShakeLength = 10
                     ball.p1Attacking = True
                     ball.attack(p1)
             if event.key == pygame.K_l:
@@ -221,6 +241,7 @@ while carryOn:
                     ball.serving = False
                     p2.canMove = True
                 elif ball.posx + ball.velx + ball.size >= p2.posx - p2.width/1.5 - p2.width/2 and ball.posx + ball.velx - ball.size <= p2.posx + p2.width*1.5 and ball.posy + ball.vely + ball.size >= p2.posy - p2.height and ball.posy + ball.vely - ball.size <= p2.posy + p2.height*1.5:
+                    screenShakeLength = 10
                     ball.p1Attacking = True
                     ball.attack(p2)
 
@@ -242,10 +263,12 @@ while carryOn:
             p2.score += 1
             print("Score: " + str(p1.score) + " : " + str(p2.score))
             P2SCORED = True
+            screenShakeLength = 0
         elif ball.posx > WIDTH / 2:
             p1.score += 1
             print("Score: " + str(p1.score) + " : " + str(p2.score))
             P1SCORED = True
+            screenShakeLength = 0
 
         ball.posy = 600 - ball.size
         ball.vely *= -0.9
@@ -334,8 +357,8 @@ while carryOn:
     # pygame.draw.rect(screen, PURPLE, [p2.posx - p2.width/1.5 - p2.width/2, p2.posy - p2.height - 10, p2.width*1.5, p2.height*1.5])
 
     # ground and net
-    pygame.draw.rect(screen, BLACK, [0, HEIGHT - 100, WIDTH, 100])
-    pygame.draw.rect(screen, BLACK, [WIDTH / 2 - 5, HEIGHT - NET_HEIGHT, 10, NET_HEIGHT])
+    pygame.draw.rect(screen, BLACK, [0 + screenShakeOffset[0] - 50, HEIGHT - 100 + screenShakeOffset[1], WIDTH + 100, 200])
+    pygame.draw.rect(screen, BLACK, [WIDTH / 2 - 5 + screenShakeOffset[0], HEIGHT - NET_HEIGHT + screenShakeOffset[1], 10, NET_HEIGHT])
 
     # update screen
     pygame.display.flip()
