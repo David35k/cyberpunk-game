@@ -2,6 +2,8 @@
 import pygame
 pygame.init()
 
+import time
+
 # some colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -25,6 +27,8 @@ clock = pygame.time.Clock()
 GRAVITY = 1
 GROUNDLEVEL = 600
 NET_HEIGHT = 250
+P1SCORED = False
+P2SCORED = False
 
 # player class
 class Player:
@@ -43,28 +47,30 @@ class Player:
         self.canMove = canMove
 
     def move(self, dir):
-        # move the player
-        if dir == "left":
-            self.velx = -10
-        elif dir == "right":
-            self.velx = 10
+        if self.canMove:
+            # move the player
+            if dir == "left":
+                self.velx = -10
+            elif dir == "right":
+                self.velx = 10
 
     def jump(self):
-        # make the player jump
-        if self.jumpPressed and self.jumpCount < 2:
-            self.jumpCount += 1
-            self.jumping = True
+        if self.canMove:
+            # make the player jump
+            if self.jumpPressed and self.jumpCount < 2:
+                self.jumpCount += 1
+                self.jumping = True
 
-            self.vely = -20
-            return
+                self.vely = -20
+                return
 
     def draw(self):
         # draw the player
         pygame.draw.rect(screen, GREY, [self.posx, self.posy, self.width, self.height])
 
 # create the players
-p1 = Player(WIDTH * 1/4, 600, 50, 50, 0, 0, False, False, 0, False, 0)
-p2 = Player(WIDTH * 3/4, 600, 50, 50, 0, 0, False, False, 0, False, 0)
+p1 = Player(50, 600, 50, 50, 0, 0, False, False, 0, False, 0, False)
+p2 = Player(WIDTH - 100, 600, 50, 50, 0, 0, False, False, 0, False, 0, True)
 
 class Ball:
     def __init__(self, posx, posy, velx, vely, size, p1Attacking, p2Attacking, serving):
@@ -110,22 +116,44 @@ class Ball:
     
     def serve(self, player):
         self.serving = True
+        self.velx = 0
+        self.vely = 0
         if player == p1:
+            p1.posx = 50
+            p1.posy = HEIGHT - 100
+            p1.canMove = False
+            p2.canMove = True
             self.posx = 100
             self.posy = HEIGHT - 200
         elif player == p2:
+            p2.posx = WIDTH - 100
+            p2.posy = HEIGHT - 100
+            p1.canMove = True
+            p2.canMove = False
             self.posx = WIDTH - 100
             self.posy = HEIGHT - 200
 
     def draw(self):
         pygame.draw.circle(screen, YELLOW, [self.posx, self.posy], self.size)
         
-ball = Ball(700, 50, 0, 0, 25, False, False, False)
+ball = Ball(700, 50, 0, 0, 25, False, False, True)
 
 ball.serve(p1)
 
+def restart(playerScored):
+    time.sleep(1.5)
+
+    if playerScored == p1:
+        ball.serve(p1)
+    elif playerScored == p2:
+        ball.serve(p2)
+
 # text
 scoreFont = pygame.font.SysFont(None, 100)
+messageFont = pygame.font.SysFont(None, 50)
+
+p1ScoredRect = messageFont.render("Player 1 scored!", True, BLACK)
+p2ScoredRect = messageFont.render("Player 2 scored!", True, BLACK)
 
 # main Game Loop
 while carryOn:
@@ -178,15 +206,21 @@ while carryOn:
         # attacking
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_f:
-                if ball.serving:
+                if ball.serving and not p1.canMove:
                     ball.velx = 15
                     ball.vely = -25
                     ball.serving = False
+                    p1.canMove = True
                 elif ball.posx + ball.velx + ball.size >= p1.posx + p1.width/1.5 and ball.posx + ball.velx - ball.size <= p1.posx + p1.width*1.5 and ball.posy + ball.vely + ball.size >= p1.posy - p1.height and ball.posy + ball.vely - ball.size <= p1.posy + p1.height*1.5:
                     ball.p1Attacking = True
                     ball.attack(p1)
             if event.key == pygame.K_l:
-                if ball.posx + ball.velx + ball.size >= p2.posx - p2.width/1.5 - p2.width/2 and ball.posx + ball.velx - ball.size <= p2.posx + p2.width*1.5 and ball.posy + ball.vely + ball.size >= p2.posy - p2.height and ball.posy + ball.vely - ball.size <= p2.posy + p2.height*1.5:
+                if ball.serving and not p2.canMove:
+                    ball.velx = -15
+                    ball.vely = -25
+                    ball.serving = False
+                    p2.canMove = True
+                elif ball.posx + ball.velx + ball.size >= p2.posx - p2.width/1.5 - p2.width/2 and ball.posx + ball.velx - ball.size <= p2.posx + p2.width*1.5 and ball.posy + ball.vely + ball.size >= p2.posy - p2.height and ball.posy + ball.vely - ball.size <= p2.posy + p2.height*1.5:
                     ball.p1Attacking = True
                     ball.attack(p2)
 
@@ -196,6 +230,25 @@ while carryOn:
 
     # ---- main game logic ----
 
+    if not ball.serving:
+        ball.vely += GRAVITY
+
+     # gravity ball and ground check
+
+     
+    if ball.posy + ball.size >= 600:
+        # if the ball is on the left side of the court give player 2 the point, otherwise give player 1 the point
+        if ball.posx < WIDTH / 2:
+            p2.score += 1
+            print("Score: " + str(p1.score) + " : " + str(p2.score))
+            P2SCORED = True
+        elif ball.posx > WIDTH / 2:
+            p1.score += 1
+            print("Score: " + str(p1.score) + " : " + str(p2.score))
+            P1SCORED = True
+
+        ball.posy = 600 - ball.size
+        ball.vely *= -0.9
 
     # gravity players
     if p1.posy + p1.height > 600:
@@ -215,22 +268,6 @@ while carryOn:
 
     if p2.jumping:
         p2.vely += GRAVITY
-
-    # gravity ball and ground check
-    if ball.posy + ball.size >= 600:
-        # if the ball is on the left side of the court give player 2 the point, otherwise give player 1 the point
-        if ball.posx < WIDTH / 2:
-            p2.score += 1
-            print("Score: " + str(p1.score) + " : " + str(p2.score))
-        elif ball.posx > WIDTH / 2:
-            p1.score += 1
-            print("Score: " + str(p1.score) + " : " + str(p2.score))
-
-        ball.posy = 600 - ball.size
-        ball.vely *= -0.9
-    
-    if not ball.serving:
-        ball.vely += GRAVITY
 
     # bounce off players
     # player 1
@@ -270,10 +307,6 @@ while carryOn:
     if p2.posx + p2.velx + p2.width <= WIDTH and p2.posx + p2.velx >= WIDTH / 2 + 5:
         p2.posx += p2.velx
     p2.posy += p2.vely
-
-    # update position ball
-    ball.posx += ball.velx
-    ball.posy += ball.vely
     
     # ---- draw onto screen ----
 
@@ -285,13 +318,17 @@ while carryOn:
     p2.draw()
     ball.draw()
 
-    # render text
-    p1ScoreRect = scoreFont.render(str(p1.score), True, (0, 0, 0))
-    p2ScoreRect = scoreFont.render(str(p2.score), True, (0, 0, 0))
+    p1ScoreRect = scoreFont.render(str(p1.score), True, BLACK)
+    p2ScoreRect = scoreFont.render(str(p2.score), True, BLACK)
 
     screen.blit(p1ScoreRect, (WIDTH * 1/4, 20))
     screen.blit(p2ScoreRect, (WIDTH * 3/4, 20))
 
+    if P1SCORED:
+        screen.blit(p1ScoredRect, (WIDTH / 2 - p1ScoredRect.get_width() / 2, HEIGHT / 2 - p1ScoredRect.get_height() / 2 - 100))
+    elif P2SCORED:
+        screen.blit(p2ScoredRect, (WIDTH / 2 - p2ScoredRect.get_width() / 2, HEIGHT / 2 - p2ScoredRect.get_height() / 2 - 100))
+        
     # hitboxes for debuggin and stuff
     # pygame.draw.rect(screen, PURPLE, [p1.posx + p1.width/1.5, p1.posy - p1.height - 10, p1.width*1.5, p1.height*1.5])
     # pygame.draw.rect(screen, PURPLE, [p2.posx - p2.width/1.5 - p2.width/2, p2.posy - p2.height - 10, p2.width*1.5, p2.height*1.5])
@@ -303,7 +340,16 @@ while carryOn:
     # update screen
     pygame.display.flip()
 
+    if P1SCORED:
+        restart(p1)
+        P1SCORED = False
+    elif P2SCORED:
+        restart(p2)
+        P2SCORED = False
+
+    # update position ball
+    ball.posx += ball.velx
+    ball.posy += ball.vely
+
     # limit to 60fps
     clock.tick(60)
-
-pygame.quit()
