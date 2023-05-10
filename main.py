@@ -1,12 +1,34 @@
 # import the pygame library and initialise the game engine
 import pygame, time, random
 pygame.init()
+pygame.mixer.init()
+
+# Sounds and sound channels
+jumpChannel = pygame.mixer.Channel(0)
+jumpSound = pygame.mixer.Sound("sounds/jump.wav")
+
+hitChannel = pygame.mixer.Channel(1)
+hitSound = pygame.mixer.Sound("sounds/hit.wav")
+
+passChannel = pygame.mixer.Channel(2)
+passSound = pygame.mixer.Sound("sounds/pass.wav")
+bounceSound = pygame.mixer.Sound("sounds/bounce.wav")
+
+pointChannel = pygame.mixer.Channel(3)
+pointSound = pygame.mixer.Sound("sounds/point.wav")
+
 
 # some colors
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-GREY = (150, 150, 150)
-YELLOW = (246, 190, 0)
+# BLACK = (0, 0, 0)
+# WHITE = (255, 255, 255)
+# GREY = (150, 150, 150)
+# YELLOW = (246, 190, 0)
+# PURPLE = (255, 0 , 255)
+
+BLACK = (255, 255, 255)
+WHITE = (0, 0, 0)
+GREY = (255, 255, 255)
+YELLOW =(255, 255, 255)
 PURPLE = (255, 0 , 255)
 
 # open new window
@@ -63,9 +85,9 @@ class Player:
         if self.canMove:
             # make the player jump
             if self.jumpPressed and self.jumpCount < 2:
+                jumpChannel.play(jumpSound)
                 self.jumpCount += 1
                 self.jumping = True
-
                 self.vely = -20
                 return
 
@@ -110,6 +132,7 @@ class Ball:
         return
     
     def attack(self, player):
+        hitChannel.play(hitSound)
         if player == p1:
             self.posx += 50
             self.velx = 40
@@ -258,6 +281,7 @@ while carryOn:
 
      
     if ball.posy + ball.size >= 600:
+        pointChannel.play(pointSound)
         # if the ball is on the left side of the court give player 2 the point, otherwise give player 1 the point
         if ball.posx < WIDTH / 2:
             p2.score += 1
@@ -296,30 +320,38 @@ while carryOn:
     # player 1
     if ball.posx + ball.size > p1.posx and ball.posx - ball.size < p1.posx + p1.width and ball.posy + ball.size + ball.vely / 2  >= p1.posy and ball.posy - ball.size < p1.posy + p1.height:
         ball.bumpVert(p1.velx, p1.vely, p1.jumping)
+        passChannel.play(passSound)
     
     if ball.posx + ball.size >= p1.posx and ball.posy + ball.size + ball.vely / 2  >= p1.posy and ball.posy - ball.size < p1.posy + p1.height and ball.posx < p1.posx + p1.width or ball.posx - ball.size <= p1.posx + p1.width and ball.posy + ball.size + ball.vely / 2  >= p1.posy and ball.posy - ball.size < p1.posy + p1.height and ball.posx > p1.posx:
          ball.bumpHor(p1.velx)
+         passChannel.play(passSound)
 
     # player 2
     if ball.posx + ball.size > p2.posx and ball.posx - ball.size < p2.posx + p2.width and ball.posy + ball.size + ball.vely / 2  >= p2.posy and ball.posy - ball.size < p2.posy + p2.height:
         ball.bumpVert(p2.velx, p2.vely, p2.jumping)
+        passChannel.play(passSound)
     
     if ball.posx + ball.size >= p2.posx and ball.posy + ball.size + ball.vely / 2  >= p2.posy and ball.posy - ball.size < p2.posy + p2.height and ball.posx < p2.posx + p2.width or ball.posx - ball.size <= p2.posx + p2.width and ball.posy + ball.size + ball.vely / 2  >= p2.posy and ball.posy - ball.size < p2.posy + p2.height and ball.posx > p2.posx:
          ball.bumpHor(p2.velx)
+         passChannel.play(passSound)
 
     # bounce off net
     if ball.posx + ball.size + ball.velx >= WIDTH / 2 - 5 and ball.posx + ball.size < WIDTH / 2 + 5 + ball.velx and ball.posy + ball.size >= HEIGHT - NET_HEIGHT:
         ball.velx *= -0.3
+        passChannel.play(bounceSound)
     
     if ball.posx - ball.size + ball.velx <= WIDTH / 2 + 5 and ball.posx - ball.size > WIDTH / 2 - 5 + ball.velx and ball.posy + ball.size >= HEIGHT - NET_HEIGHT:
         ball.velx *= -0.3
+        passChannel.play(bounceSound)
 
     if ball.posy + ball.size >= HEIGHT - NET_HEIGHT and ball.posy + ball.size < HEIGHT - NET_HEIGHT + 20 and ball.posx + ball.size >= WIDTH / 2 - 5 and ball.posx - ball.size <= WIDTH / 2 + 5:
         ball.vely *= -0.8
+        passChannel.play(bounceSound)
 
     # ball boing boing
     if ball.posx + ball.size + ball.velx >= WIDTH or ball.posx - ball.size + ball.velx <= 0:
         ball.velx *= -0.7
+        passChannel.play(bounceSound)
 
     # update position of player 1
     if p1.posx + p1.velx >= 0 and p1.posx + p1.width + p1.velx <= WIDTH / 2 - 5:
