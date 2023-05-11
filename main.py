@@ -1,5 +1,6 @@
 # import the pygame library and initialise the game engine
-import pygame, time, random
+import pygame, random
+
 pygame.init()
 pygame.mixer.init()
 
@@ -17,25 +18,16 @@ bounceSound = pygame.mixer.Sound("sounds/bounce.wav")
 pointChannel = pygame.mixer.Channel(3)
 pointSound = pygame.mixer.Sound("sounds/point.wav")
 
-
 # some colors
-# BLACK = (0, 0, 0)
-# WHITE = (255, 255, 255)
-# GREY = (150, 150, 150)
-# YELLOW = (246, 190, 0)
-# PURPLE = (255, 0 , 255)
-
-BLACK = (255, 255, 255)
-WHITE = (0, 0, 0)
-GREY = (255, 255, 255)
-YELLOW =(255, 255, 255)
-PURPLE = (255, 0 , 255)
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+PURPLE = (255, 0, 255)
 
 # open new window
 WIDTH, HEIGHT = 1000, 700
 size = (WIDTH, HEIGHT)
 screen = pygame.display.set_mode(size)
-pygame.display.set_caption("VOLLEYBALL GAME!!!!!")
+pygame.display.set_caption("Retro Volley")
 
 # game will carry on until user exits
 carryOn = True
@@ -47,19 +39,32 @@ clock = pygame.time.Clock()
 screenShakeOffset = [0, 0]
 screenShakeLength = 0
 
-# particles
-particles = []
-
 # stuff
 GRAVITY = 1
 GROUNDLEVEL = 600
 NET_HEIGHT = 250
 P1SCORED = False
 P2SCORED = False
+PAUSE_LENGTH = 0
+
 
 # player class
 class Player:
-    def __init__(self, posx, posy, width, height, velx, vely, jumping, jumpPressed, jumpCount, attackPressed, score, canMove):
+    def __init__(
+        self,
+        posx,
+        posy,
+        width,
+        height,
+        velx,
+        vely,
+        jumping,
+        jumpPressed,
+        jumpCount,
+        attackPressed,
+        score,
+        canMove,
+    ):
         self.posx = posx
         self.posy = posy
         self.width = width
@@ -93,14 +98,27 @@ class Player:
 
     def draw(self):
         # draw the player
-        pygame.draw.rect(screen, GREY, [self.posx + screenShakeOffset[0], self.posy + screenShakeOffset[1], self.width, self.height])
+        pygame.draw.rect(
+            screen,
+            WHITE,
+            [
+                self.posx + screenShakeOffset[0],
+                self.posy + screenShakeOffset[1],
+                self.width,
+                self.height,
+            ],
+        )
+
 
 # create the players
 p1 = Player(50, 600, 50, 50, 0, 0, False, False, 0, False, 0, False)
 p2 = Player(WIDTH - 100, 600, 50, 50, 0, 0, False, False, 0, False, 0, True)
 
+
 class Ball:
-    def __init__(self, posx, posy, velx, vely, size, p1Attacking, p2Attacking, serving):
+    def __init__(
+        self, posx, posy, velx, vely, size, p1Attacking, p2Attacking, serving, canTouch
+    ):
         self.posx = posx
         self.posy = posy
         self.velx = velx
@@ -109,6 +127,7 @@ class Ball:
         self.p1Attacking = p1Attacking
         self.p2Attacking = p2Attacking
         self.serving = serving
+        self.canTouch = canTouch
 
     def bumpVert(self, playerVelx, playerVely, playerJumping):
         # bump the ball vertically
@@ -130,7 +149,7 @@ class Ball:
             self.velx = playerVelx * 1.4
 
         return
-    
+
     def attack(self, player):
         hitChannel.play(hitSound)
         if player == p1:
@@ -141,8 +160,7 @@ class Ball:
             self.velx = -40
 
         self.vely = 20
-        
-    
+
     def serve(self, player):
         self.serving = True
         self.velx = 0
@@ -163,33 +181,63 @@ class Ball:
             self.posy = HEIGHT - 200
 
     def draw(self):
-        pygame.draw.circle(screen, YELLOW, [self.posx + screenShakeOffset[0], self.posy + screenShakeOffset[1]], self.size)
-        
-ball = Ball(700, 50, 0, 0, 25, False, False, True)
+        pygame.draw.circle(
+            screen,
+            WHITE,
+            [self.posx + screenShakeOffset[0], self.posy + screenShakeOffset[1]],
+            self.size,
+        )
+
+
+ball = Ball(700, 50, 0, 0, 25, False, False, True, True)
 
 ball.serve(p1)
 
+
+# restarts after a point
 def restart(playerScored):
     screenShakeOffset[0] = 0
     screenShakeOffset[1] = 0
-    time.sleep(1.5)
+
+    ball.canTouch = True
 
     if playerScored == p1:
         ball.serve(p1)
     elif playerScored == p2:
         ball.serve(p2)
 
+
+# particles
+particles = []
+
+
+def createParticles(
+    posx, posy, minVelx, maxVelx, minVely, maxVely, minSize, maxSize, amount
+):
+    for i in range(amount):
+        particles.append(
+            [
+                [posx, posy],
+                [random.randint(minVelx, maxVelx), random.randint(minVely, maxVely)],
+                random.randint(minSize, maxSize),
+            ]
+        )
+
+
 # text
-scoreFont = pygame.font.SysFont(None, 100)
+# ALLFONTS = pygame.font.get_fonts() # for testing fonts
+
+scoreFont = pygame.font.SysFont(None, 150)
 messageFont = pygame.font.SysFont(None, 50)
 
-p1ScoredRect = messageFont.render("Player 1 scored!", True, BLACK)
-p2ScoredRect = messageFont.render("Player 2 scored!", True, BLACK)
+p1ScoredRect = messageFont.render("Player 1 scored!", True, WHITE)
+p2ScoredRect = messageFont.render("Player 2 scored!", True, WHITE)
 
 # main Game Loop
 while carryOn:
-
-    particles.append([250, 250])
+    # Time between scoring a point and next serve
+    if PAUSE_LENGTH > 0:
+        PAUSE_LENGTH -= 1
 
     if screenShakeLength > 0:
         screenShakeLength -= 1
@@ -201,7 +249,7 @@ while carryOn:
 
     # ---- check for user inputs ----
 
-    for event in pygame.event.get(): #user did something
+    for event in pygame.event.get():  # user did something
         if event.type == pygame.QUIT:
             carryOn = False
 
@@ -247,55 +295,81 @@ while carryOn:
 
         # attacking
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_f:
+            if event.key == pygame.K_f and ball.canTouch:
                 if ball.serving and not p1.canMove:
                     ball.velx = 15
                     ball.vely = -25
                     ball.serving = False
                     p1.canMove = True
-                elif ball.posx + ball.velx + ball.size >= p1.posx + p1.width/1.5 and ball.posx + ball.velx - ball.size <= p1.posx + p1.width*1.5 and ball.posy + ball.vely + ball.size >= p1.posy - p1.height and ball.posy + ball.vely - ball.size <= p1.posy + p1.height*1.5:
+                elif (
+                    ball.posx + ball.velx + ball.size >= p1.posx + p1.width / 1.5
+                    and ball.posx + ball.velx - ball.size <= p1.posx + p1.width * 1.5
+                    and ball.posy + ball.vely + ball.size >= p1.posy - p1.height
+                    and ball.posy + ball.vely - ball.size <= p1.posy + p1.height * 1.5
+                ):
                     screenShakeLength = 10
                     ball.p1Attacking = True
                     ball.attack(p1)
-            if event.key == pygame.K_l:
+            if event.key == pygame.K_l and ball.canTouch:
                 if ball.serving and not p2.canMove:
                     ball.velx = -15
                     ball.vely = -25
                     ball.serving = False
                     p2.canMove = True
-                elif ball.posx + ball.velx + ball.size >= p2.posx - p2.width/1.5 - p2.width/2 and ball.posx + ball.velx - ball.size <= p2.posx + p2.width*1.5 and ball.posy + ball.vely + ball.size >= p2.posy - p2.height and ball.posy + ball.vely - ball.size <= p2.posy + p2.height*1.5:
+                elif (
+                    ball.posx + ball.velx + ball.size
+                    >= p2.posx - p2.width / 1.5 - p2.width / 2
+                    and ball.posx + ball.velx - ball.size <= p2.posx + p2.width * 1.5
+                    and ball.posy + ball.vely + ball.size >= p2.posy - p2.height
+                    and ball.posy + ball.vely - ball.size <= p2.posy + p2.height * 1.5
+                ):
                     screenShakeLength = 10
                     ball.p1Attacking = True
                     ball.attack(p2)
-
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_SPACE:
-                ball.p1Attacking = False
 
     # ---- main game logic ----
 
     if not ball.serving:
         ball.vely += GRAVITY
 
-     # gravity ball and ground check
+    # ground check
 
-     
     if ball.posy + ball.size >= 600:
-        pointChannel.play(pointSound)
         # if the ball is on the left side of the court give player 2 the point, otherwise give player 1 the point
-        if ball.posx < WIDTH / 2:
+        if ball.posx < WIDTH / 2 and ball.canTouch:
+            PAUSE_LENGTH = 120
+            pointChannel.play(pointSound)
+            ball.canTouch = False
             p2.score += 1
             print("Score: " + str(p1.score) + " : " + str(p2.score))
             P2SCORED = True
-            screenShakeLength = 0
-        elif ball.posx > WIDTH / 2:
+            p1.canMove = False
+        elif ball.posx > WIDTH / 2 and ball.canTouch:
+            PAUSE_LENGTH = 120
+            pointChannel.play(pointSound)
+            ball.canTouch = False
             p1.score += 1
             print("Score: " + str(p1.score) + " : " + str(p2.score))
             P1SCORED = True
-            screenShakeLength = 0
+            p2.canMove = False
+        else:
+            passChannel.play(bounceSound)
 
+        print(int(ball.vely) * 3)
+
+        createParticles(
+            ball.posx,
+            ball.posy + ball.size,
+            -6,
+            6,
+            int(ball.vely / -5),
+            0,
+            2,
+            5,
+            int(ball.vely) * 5,
+        )
         ball.posy = 600 - ball.size
-        ball.vely *= -0.9
+        ball.vely *= -0.7
 
     # gravity players
     if p1.posy + p1.height > 600:
@@ -318,38 +392,86 @@ while carryOn:
 
     # bounce off players
     # player 1
-    if ball.posx + ball.size > p1.posx and ball.posx - ball.size < p1.posx + p1.width and ball.posy + ball.size + ball.vely / 2  >= p1.posy and ball.posy - ball.size < p1.posy + p1.height:
+    if (
+        ball.posx + ball.size > p1.posx
+        and ball.posx - ball.size < p1.posx + p1.width
+        and ball.posy + ball.size + ball.vely / 2 >= p1.posy
+        and ball.posy - ball.size < p1.posy + p1.height
+        and ball.canTouch
+    ):
         ball.bumpVert(p1.velx, p1.vely, p1.jumping)
         passChannel.play(passSound)
-    
-    if ball.posx + ball.size >= p1.posx and ball.posy + ball.size + ball.vely / 2  >= p1.posy and ball.posy - ball.size < p1.posy + p1.height and ball.posx < p1.posx + p1.width or ball.posx - ball.size <= p1.posx + p1.width and ball.posy + ball.size + ball.vely / 2  >= p1.posy and ball.posy - ball.size < p1.posy + p1.height and ball.posx > p1.posx:
-         ball.bumpHor(p1.velx)
-         passChannel.play(passSound)
+
+    if (
+        ball.posx + ball.size >= p1.posx
+        and ball.posy + ball.size + ball.vely / 2 >= p1.posy
+        and ball.posy - ball.size < p1.posy + p1.height
+        and ball.posx < p1.posx + p1.width
+        or ball.posx - ball.size <= p1.posx + p1.width
+        and ball.posy + ball.size + ball.vely / 2 >= p1.posy
+        and ball.posy - ball.size < p1.posy + p1.height
+        and ball.posx > p1.posx
+        and ball.canTouch
+    ):
+        ball.bumpHor(p1.velx)
+        passChannel.play(passSound)
 
     # player 2
-    if ball.posx + ball.size > p2.posx and ball.posx - ball.size < p2.posx + p2.width and ball.posy + ball.size + ball.vely / 2  >= p2.posy and ball.posy - ball.size < p2.posy + p2.height:
+    if (
+        ball.posx + ball.size > p2.posx
+        and ball.posx - ball.size < p2.posx + p2.width
+        and ball.posy + ball.size + ball.vely / 2 >= p2.posy
+        and ball.posy - ball.size < p2.posy + p2.height
+        and ball.canTouch
+    ):
         ball.bumpVert(p2.velx, p2.vely, p2.jumping)
         passChannel.play(passSound)
-    
-    if ball.posx + ball.size >= p2.posx and ball.posy + ball.size + ball.vely / 2  >= p2.posy and ball.posy - ball.size < p2.posy + p2.height and ball.posx < p2.posx + p2.width or ball.posx - ball.size <= p2.posx + p2.width and ball.posy + ball.size + ball.vely / 2  >= p2.posy and ball.posy - ball.size < p2.posy + p2.height and ball.posx > p2.posx:
-         ball.bumpHor(p2.velx)
-         passChannel.play(passSound)
+
+    if (
+        ball.posx + ball.size >= p2.posx
+        and ball.posy + ball.size + ball.vely / 2 >= p2.posy
+        and ball.posy - ball.size < p2.posy + p2.height
+        and ball.posx < p2.posx + p2.width
+        or ball.posx - ball.size <= p2.posx + p2.width
+        and ball.posy + ball.size + ball.vely / 2 >= p2.posy
+        and ball.posy - ball.size < p2.posy + p2.height
+        and ball.posx > p2.posx
+        and ball.canTouch
+    ):
+        ball.bumpHor(p2.velx)
+        passChannel.play(passSound)
 
     # bounce off net
-    if ball.posx + ball.size + ball.velx >= WIDTH / 2 - 5 and ball.posx + ball.size < WIDTH / 2 + 5 + ball.velx and ball.posy + ball.size >= HEIGHT - NET_HEIGHT:
-        ball.velx *= -0.3
-        passChannel.play(bounceSound)
-    
-    if ball.posx - ball.size + ball.velx <= WIDTH / 2 + 5 and ball.posx - ball.size > WIDTH / 2 - 5 + ball.velx and ball.posy + ball.size >= HEIGHT - NET_HEIGHT:
+    if (
+        ball.posx + ball.size + ball.velx >= WIDTH / 2 - 5
+        and ball.posx + ball.size < WIDTH / 2 + 5 + ball.velx
+        and ball.posy + ball.size >= HEIGHT - NET_HEIGHT
+    ):
         ball.velx *= -0.3
         passChannel.play(bounceSound)
 
-    if ball.posy + ball.size >= HEIGHT - NET_HEIGHT and ball.posy + ball.size < HEIGHT - NET_HEIGHT + 20 and ball.posx + ball.size >= WIDTH / 2 - 5 and ball.posx - ball.size <= WIDTH / 2 + 5:
+    if (
+        ball.posx - ball.size + ball.velx <= WIDTH / 2 + 5
+        and ball.posx - ball.size > WIDTH / 2 - 5 + ball.velx
+        and ball.posy + ball.size >= HEIGHT - NET_HEIGHT
+    ):
+        ball.velx *= -0.3
+        passChannel.play(bounceSound)
+
+    if (
+        ball.posy + ball.size >= HEIGHT - NET_HEIGHT
+        and ball.posy + ball.size < HEIGHT - NET_HEIGHT + 20
+        and ball.posx + ball.size >= WIDTH / 2 - 5
+        and ball.posx - ball.size <= WIDTH / 2 + 5
+    ):
         ball.vely *= -0.8
         passChannel.play(bounceSound)
 
     # ball boing boing
-    if ball.posx + ball.size + ball.velx >= WIDTH or ball.posx - ball.size + ball.velx <= 0:
+    if (
+        ball.posx + ball.size + ball.velx >= WIDTH
+        or ball.posx - ball.size + ball.velx <= 0
+    ):
         ball.velx *= -0.7
         passChannel.play(bounceSound)
 
@@ -357,48 +479,88 @@ while carryOn:
     if p1.posx + p1.velx >= 0 and p1.posx + p1.width + p1.velx <= WIDTH / 2 - 5:
         p1.posx += p1.velx
     p1.posy += p1.vely
-    
+
     # update position of player 2
     if p2.posx + p2.velx + p2.width <= WIDTH and p2.posx + p2.velx >= WIDTH / 2 + 5:
         p2.posx += p2.velx
     p2.posy += p2.vely
-    
+
     # ---- draw onto screen ----
 
     # first clear the screen
-    screen.fill(WHITE)
+    screen.fill(BLACK)
+
+    # draw particles
+    for particle in particles:
+        particle[0][0] += particle[1][0]  # x
+        particle[0][1] += particle[1][1]  # y
+        particle[2] -= 0.1
+        particle[1][1] += GRAVITY / 2
+        pygame.draw.circle(screen, WHITE, particle[0], int(particle[2]))
+        if particle[2] <= 0:
+            particles.remove(particle)
 
     # draw stuff
     p1.draw()
     p2.draw()
     ball.draw()
 
-    p1ScoreRect = scoreFont.render(str(p1.score), True, BLACK)
-    p2ScoreRect = scoreFont.render(str(p2.score), True, BLACK)
+    p1ScoreRect = scoreFont.render(str(p1.score), True, WHITE)
+    p2ScoreRect = scoreFont.render(str(p2.score), True, WHITE)
 
-    screen.blit(p1ScoreRect, (WIDTH * 1/4, 20))
-    screen.blit(p2ScoreRect, (WIDTH * 3/4, 20))
+    screen.blit(p1ScoreRect, (WIDTH * 1 / 4, 20))
+    screen.blit(p2ScoreRect, (WIDTH * 3 / 4, 20))
 
     if P1SCORED:
-        screen.blit(p1ScoredRect, (WIDTH / 2 - p1ScoredRect.get_width() / 2, HEIGHT / 2 - p1ScoredRect.get_height() / 2 - 100))
+        screen.blit(
+            p1ScoredRect,
+            (
+                WIDTH / 2 - p1ScoredRect.get_width() / 2,
+                HEIGHT / 2 - p1ScoredRect.get_height() / 2 - 100,
+            ),
+        )
     elif P2SCORED:
-        screen.blit(p2ScoredRect, (WIDTH / 2 - p2ScoredRect.get_width() / 2, HEIGHT / 2 - p2ScoredRect.get_height() / 2 - 100))
-        
+        screen.blit(
+            p2ScoredRect,
+            (
+                WIDTH / 2 - p2ScoredRect.get_width() / 2,
+                HEIGHT / 2 - p2ScoredRect.get_height() / 2 - 100,
+            ),
+        )
+
     # hitboxes for debuggin and stuff
     # pygame.draw.rect(screen, PURPLE, [p1.posx + p1.width/1.5, p1.posy - p1.height - 10, p1.width*1.5, p1.height*1.5])
     # pygame.draw.rect(screen, PURPLE, [p2.posx - p2.width/1.5 - p2.width/2, p2.posy - p2.height - 10, p2.width*1.5, p2.height*1.5])
 
     # ground and net
-    pygame.draw.rect(screen, BLACK, [0 + screenShakeOffset[0] - 50, HEIGHT - 100 + screenShakeOffset[1], WIDTH + 100, 200])
-    pygame.draw.rect(screen, BLACK, [WIDTH / 2 - 5 + screenShakeOffset[0], HEIGHT - NET_HEIGHT + screenShakeOffset[1], 10, NET_HEIGHT])
+    pygame.draw.rect(
+        screen,
+        WHITE,
+        [
+            0 + screenShakeOffset[0] - 50,
+            HEIGHT - 100 + screenShakeOffset[1],
+            WIDTH + 100,
+            200,
+        ],
+    )
+    pygame.draw.rect(
+        screen,
+        WHITE,
+        [
+            WIDTH / 2 - 5 + screenShakeOffset[0],
+            HEIGHT - NET_HEIGHT + screenShakeOffset[1],
+            10,
+            NET_HEIGHT,
+        ],
+    )
 
     # update screen
     pygame.display.flip()
 
-    if P1SCORED:
+    if P1SCORED and PAUSE_LENGTH == 0:
         restart(p1)
         P1SCORED = False
-    elif P2SCORED:
+    elif P2SCORED and PAUSE_LENGTH == 0:
         restart(p2)
         P2SCORED = False
 
@@ -408,3 +570,5 @@ while carryOn:
 
     # limit to 60fps
     clock.tick(60)
+
+pygame.quit()
