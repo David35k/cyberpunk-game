@@ -22,6 +22,10 @@ pointSound = pygame.mixer.Sound("sounds/point.wav")
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 PURPLE = (255, 0, 255)
+BACKGROUND_COLOR = (55, 42, 57)
+PLAYERCOLOR = (154, 240, 137)
+BALLCOLOR = (255, 250, 160)
+NET_GROUND = (207, 207, 196)
 
 # open new window
 WIDTH, HEIGHT = 1000, 700
@@ -97,10 +101,14 @@ class Player:
                 return
 
     def draw(self):
+        playerColor = (120, 131, 116)
+
+        if self == p2:
+            playerColor = (170, 100, 77)
         # draw the player
         pygame.draw.rect(
             screen,
-            WHITE,
+            playerColor,
             [
                 self.posx + screenShakeOffset[0],
                 self.posy + screenShakeOffset[1],
@@ -183,7 +191,7 @@ class Ball:
     def draw(self):
         pygame.draw.circle(
             screen,
-            WHITE,
+            BALLCOLOR,
             [self.posx + screenShakeOffset[0], self.posy + screenShakeOffset[1]],
             self.size,
         )
@@ -341,7 +349,6 @@ while carryOn:
             pointChannel.play(pointSound)
             ball.canTouch = False
             p2.score += 1
-            print("Score: " + str(p1.score) + " : " + str(p2.score))
             P2SCORED = True
             p1.canMove = False
         elif ball.posx > WIDTH / 2 and ball.canTouch:
@@ -349,13 +356,10 @@ while carryOn:
             pointChannel.play(pointSound)
             ball.canTouch = False
             p1.score += 1
-            print("Score: " + str(p1.score) + " : " + str(p2.score))
             P1SCORED = True
             p2.canMove = False
         else:
             passChannel.play(bounceSound)
-
-        print(int(ball.vely) * 3)
 
         createParticles(
             ball.posx,
@@ -488,7 +492,7 @@ while carryOn:
     # ---- draw onto screen ----
 
     # first clear the screen
-    screen.fill(BLACK)
+    screen.fill(BACKGROUND_COLOR)
 
     # draw particles
     for particle in particles:
@@ -535,7 +539,7 @@ while carryOn:
     # ground and net
     pygame.draw.rect(
         screen,
-        WHITE,
+        NET_GROUND,
         [
             0 + screenShakeOffset[0] - 50,
             HEIGHT - 100 + screenShakeOffset[1],
@@ -545,7 +549,7 @@ while carryOn:
     )
     pygame.draw.rect(
         screen,
-        WHITE,
+        NET_GROUND,
         [
             WIDTH / 2 - 5 + screenShakeOffset[0],
             HEIGHT - NET_HEIGHT + screenShakeOffset[1],
