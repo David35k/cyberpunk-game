@@ -19,13 +19,24 @@ pointChannel = pygame.mixer.Channel(3)
 pointSound = pygame.mixer.Sound("sounds/point.wav")
 
 # some colors
+# BLACK = (0, 0, 0)
+# WHITE = (255, 255, 255)
+# PURPLE = (255, 0, 255)
+# BACKGROUND_COLOR = (13, 43, 69)
+# # PLAYERCOLOR = (141, 105, 122)
+# PLAYERCOLOR = (255, 212, 163)
+# BALLCOLOR = (255, 170, 94)
+# NET_COLOR = (255, 255, 255)
+# GROUND_COLOR = (84, 78, 104)
+
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 PURPLE = (255, 0, 255)
-BACKGROUND_COLOR = (55, 42, 57)
-PLAYERCOLOR = (154, 240, 137)
-BALLCOLOR = (255, 250, 160)
-NET_GROUND = (207, 207, 196)
+BACKGROUND_COLOR = (34, 35, 35)
+PLAYERCOLOR = (240, 246, 240)
+BALLCOLOR = (240, 246, 240)
+NET_COLOR = (240, 246, 240)
+GROUND_COLOR = (240, 246, 240)
 
 # open new window
 WIDTH, HEIGHT = 1000, 700
@@ -101,10 +112,10 @@ class Player:
                 return
 
     def draw(self):
-        playerColor = (120, 131, 116)
+        playerColor = PLAYERCOLOR
 
-        if self == p2:
-            playerColor = (170, 100, 77)
+        # if self == p2:
+        #     playerColor = (170, 100, 77)
         # draw the player
         pygame.draw.rect(
             screen,
@@ -238,8 +249,8 @@ def createParticles(
 scoreFont = pygame.font.SysFont(None, 150)
 messageFont = pygame.font.SysFont(None, 50)
 
-p1ScoredRect = messageFont.render("Player 1 scored!", True, WHITE)
-p2ScoredRect = messageFont.render("Player 2 scored!", True, WHITE)
+p1ScoredRect = messageFont.render("Player 1 scored!", True, (240, 246, 240))
+p2ScoredRect = messageFont.render("Player 2 scored!", True, (240, 246, 240))
 
 # main Game Loop
 while carryOn:
@@ -500,7 +511,7 @@ while carryOn:
         particle[0][1] += particle[1][1]  # y
         particle[2] -= 0.1
         particle[1][1] += GRAVITY / 2
-        pygame.draw.circle(screen, WHITE, particle[0], int(particle[2]))
+        pygame.draw.circle(screen, (240, 246, 240), particle[0], int(particle[2]))
         if particle[2] <= 0:
             particles.remove(particle)
 
@@ -509,8 +520,8 @@ while carryOn:
     p2.draw()
     ball.draw()
 
-    p1ScoreRect = scoreFont.render(str(p1.score), True, WHITE)
-    p2ScoreRect = scoreFont.render(str(p2.score), True, WHITE)
+    p1ScoreRect = scoreFont.render(str(p1.score), True, (240, 246, 240))
+    p2ScoreRect = scoreFont.render(str(p2.score), True, (240, 246, 240))
 
     screen.blit(p1ScoreRect, (WIDTH * 1 / 4, 20))
     screen.blit(p2ScoreRect, (WIDTH * 3 / 4, 20))
@@ -537,24 +548,26 @@ while carryOn:
     # pygame.draw.rect(screen, PURPLE, [p2.posx - p2.width/1.5 - p2.width/2, p2.posy - p2.height - 10, p2.width*1.5, p2.height*1.5])
 
     # ground and net
+
     pygame.draw.rect(
         screen,
-        NET_GROUND,
-        [
-            0 + screenShakeOffset[0] - 50,
-            HEIGHT - 100 + screenShakeOffset[1],
-            WIDTH + 100,
-            200,
-        ],
-    )
-    pygame.draw.rect(
-        screen,
-        NET_GROUND,
+        NET_COLOR,
         [
             WIDTH / 2 - 5 + screenShakeOffset[0],
             HEIGHT - NET_HEIGHT + screenShakeOffset[1],
             10,
             NET_HEIGHT,
+        ],
+    )
+
+    pygame.draw.rect(
+        screen,
+        GROUND_COLOR,
+        [
+            0 + screenShakeOffset[0] - 50,
+            HEIGHT - 100 + screenShakeOffset[1],
+            WIDTH + 100,
+            200,
         ],
     )
 
