@@ -18,6 +18,12 @@ bounceSound = pygame.mixer.Sound("sounds/bounce.wav")
 pointChannel = pygame.mixer.Channel(3)
 pointSound = pygame.mixer.Sound("sounds/point.wav")
 
+musicChannel = pygame.mixer.Channel(4)
+mainTheme = pygame.mixer.Sound("sounds/main-theme.wav")
+
+musicChannel.play(mainTheme, -1)
+
+
 # some colors
 # BLACK = (0, 0, 0)
 # WHITE = (255, 255, 255)
@@ -46,6 +52,7 @@ pygame.display.set_caption("Retro Volley")
 
 # game will carry on until user exits
 carryOn = True
+inMainMenu = True
 
 # clock to control how fast screen updates
 clock = pygame.time.Clock()
@@ -251,6 +258,31 @@ messageFont = pygame.font.SysFont(None, 50)
 
 p1ScoredRect = messageFont.render("Player 1 scored!", True, (240, 246, 240))
 p2ScoredRect = messageFont.render("Player 2 scored!", True, (240, 246, 240))
+pressPlayRect = messageFont.render("Press space to play", True, (240, 246, 240))
+
+
+while inMainMenu:
+    for event in pygame.event.get():  # user did something
+        if event.type == pygame.QUIT:
+            inMainMenu = False
+            carryOn = False
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                inMainMenu = False
+                musicChannel.stop()
+
+    # first clear the screen
+    screen.fill(BLACK)
+
+    # draw stuff
+    screen.blit(pressPlayRect, (WIDTH / 2 - pressPlayRect.get_width() / 2, HEIGHT / 2 - 50))
+
+    # update screen
+    pygame.display.flip()
+
+    # limit to 60fps
+    clock.tick(60)
 
 # main Game Loop
 while carryOn:
