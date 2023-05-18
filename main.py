@@ -20,21 +20,15 @@ pointSound = pygame.mixer.Sound("sounds/point.wav")
 
 musicChannel = pygame.mixer.Channel(4)
 mainTheme = pygame.mixer.Sound("sounds/main-theme.wav")
+playingTheme = pygame.mixer.Sound("sounds/willyWacka.wav")
+
+drumChannel = pygame.mixer.Channel(5)
+drums = pygame.mixer.Sound("sounds/drums.wav")
 
 musicChannel.play(mainTheme, -1)
 
 
 # some colors
-# BLACK = (0, 0, 0)
-# WHITE = (255, 255, 255)
-# PURPLE = (255, 0, 255)
-# BACKGROUND_COLOR = (13, 43, 69)
-# # PLAYERCOLOR = (141, 105, 122)
-# PLAYERCOLOR = (255, 212, 163)
-# BALLCOLOR = (255, 170, 94)
-# NET_COLOR = (255, 255, 255)
-# GROUND_COLOR = (84, 78, 104)
-
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 PURPLE = (255, 0, 255)
@@ -120,9 +114,6 @@ class Player:
 
     def draw(self):
         playerColor = PLAYERCOLOR
-
-        # if self == p2:
-        #     playerColor = (170, 100, 77)
         # draw the player
         pygame.draw.rect(
             screen,
@@ -214,11 +205,9 @@ class Ball:
             self.size,
         )
 
-
 ball = Ball(700, 50, 0, 0, 25, False, False, True, True)
 
 ball.serve(p1)
-
 
 # restarts after a point
 def restart(playerScored):
@@ -236,7 +225,6 @@ def restart(playerScored):
 # particles
 particles = []
 
-
 def createParticles(
     posx, posy, minVelx, maxVelx, minVely, maxVely, minSize, maxSize, amount
 ):
@@ -249,7 +237,6 @@ def createParticles(
             ]
         )
 
-
 # text
 # ALLFONTS = pygame.font.get_fonts() # for testing fonts
 
@@ -259,7 +246,6 @@ messageFont = pygame.font.SysFont(None, 50)
 p1ScoredRect = messageFont.render("Player 1 scored!", True, (240, 246, 240))
 p2ScoredRect = messageFont.render("Player 2 scored!", True, (240, 246, 240))
 pressPlayRect = messageFont.render("Press space to play", True, (240, 246, 240))
-
 
 while inMainMenu:
     for event in pygame.event.get():  # user did something
@@ -271,6 +257,8 @@ while inMainMenu:
             if event.key == pygame.K_SPACE:
                 inMainMenu = False
                 musicChannel.stop()
+                musicChannel.play(playingTheme, -1)
+                drumChannel.play(drums, -1)
 
     # first clear the screen
     screen.fill(BLACK)
