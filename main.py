@@ -21,9 +21,11 @@ pointSound = pygame.mixer.Sound("sounds/point.wav")
 musicChannel = pygame.mixer.Channel(4)
 mainTheme = pygame.mixer.Sound("sounds/main-theme.wav")
 playingTheme = pygame.mixer.Sound("sounds/willyWacka.wav")
+playingTheme.set_volume(0.4)
 
 drumChannel = pygame.mixer.Channel(5)
 drums = pygame.mixer.Sound("sounds/drums.wav")
+drums.set_volume(0.6)
 
 musicChannel.play(mainTheme, -1)
 
@@ -170,10 +172,10 @@ class Ball:
     def attack(self, player):
         hitChannel.play(hitSound)
         if player == p1:
-            self.posx += 50
+            self.posx = player.posx + player.width + self.size + 10
             self.velx = 40
         elif player == p2:
-            self.posx -= 50
+            self.posx = player.posx - self.size - 10
             self.velx = -40
 
         self.vely = 20
