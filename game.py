@@ -29,7 +29,6 @@ drums.set_volume(0.6)
 
 musicChannel.play(mainTheme, -1)
 
-
 # some colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
